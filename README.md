@@ -223,10 +223,8 @@ agrodetect/
 ├── app.py                  # Aplicación principal de Streamlit
 ├── model/                  # Modelo entrenado (.keras / .h5) y config_app.json
 ├── notebooks/               # Notebook completo de entrenamiento (Colab/Jupyter)
-├── data/                   # Scripts de descarga/organización de datasets
+├── Dataset/                   # Organización de datasets
 ├── docs/                   # Informe final y documentación del proyecto
-├── .streamlit/
-│   └── secrets.toml        # API key de Groq (no versionado, ver .gitignore)
 ├── requirements.txt
 └── README.md
 ```
