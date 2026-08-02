@@ -225,7 +225,8 @@ agrodetect/
 ├── notebooks/               # Notebook completo de entrenamiento (Colab/Jupyter)
 ├── Dataset/                   # Organización de datasets
 ├── docs/                   # Informe final y documentación del proyecto
-├── requirements.txt
+├── requirements.txt        
+├── .gitattributes
 └── README.md
 ```
 
