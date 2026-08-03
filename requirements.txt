@@ -1,8 +1,10 @@
 streamlit
-tensorflow
-numpy
+tensorflow-cpu==2.15.0
+numpy>=1.23.5,<2.0.0
 pillow
 groq
 reportlab
 requests
 python-dotenv
+keras
+h5
