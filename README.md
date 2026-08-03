@@ -5,12 +5,12 @@
 > Proyecto final de Inteligencia Artificial aplicado a la caficultura de Comayagua, Honduras.
 
 [![Estado](https://img.shields.io/badge/estado-finalizado-brightgreen)]()
-[![Licencia](https://img.shields.io/badge/licencia-MIT-blue)]()
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)]()
 [![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)]()
 
----
 
+---
+- **Url Streamlit ** —  ([Streamlit](https://agrodetect-grup4.streamlit.app/) 
 ## 📖 Índice
 
 - [Descripción del proyecto](#-descripción-del-proyecto)
