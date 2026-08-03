@@ -15,14 +15,6 @@ from PIL import Image
 from tensorflow import keras
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
-# Carga variables desde un archivo .env cuando se corre en local
-# (no afecta el despliegue en Streamlit Cloud, que usa .streamlit/secrets.toml)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -58,36 +50,18 @@ def render_html(html_content: str):
     st.markdown(html_content, unsafe_allow_html=True)
 
 
-def construir_recomendacion_html(rec_data, text_sub_color, fuente=None):
+def construir_recomendacion_html(rec_data, text_sub_color):
     """
     Construye el HTML del bloque de recomendacion (numerado, con titulos y texto)
     a partir de la lista estructurada, o de un texto plano de respaldo.
     Reutilizado tanto en el panel de Diagnostico como en el Historial.
-
-    fuente: "ia" si la genero el modelo de lenguaje (Groq), "respaldo" si vino
-    del texto curado fijo en el codigo, o None si no se sabe (datos antiguos).
     """
-    badge_html = ""
-    if fuente == "ia":
-        badge_html = (
-            '<span style="background-color:#2D5A3D; color:#fff; font-size:10px; '
-            'font-weight:bold; padding:3px 9px; border-radius:10px; margin-left:8px;">'
-            '⚡ GENERADO POR IA</span>'
-        )
-    elif fuente == "respaldo":
-        badge_html = (
-            '<span style="background-color:#8C7D73; color:#fff; font-size:10px; '
-            'font-weight:bold; padding:3px 9px; border-radius:10px; margin-left:8px;">'
-            '📖 GUIA TECNICA PREDEFINIDA</span>'
-        )
-
     if isinstance(rec_data, list) and len(rec_data) > 0:
         html = f"""
         <div class="rec-container">
             <div class="rec-header">
                 <span class="rec-header-icon">💡</span>
                 <span class="rec-header-label">ORIENTACION Y MANEJO PREVENTIVO</span>
-                {badge_html}
             </div>
             <p style="font-size:12px; color:{text_sub_color}; margin-bottom:12px;">
                 Aqui tienes una recomendacion tecnica detallada para manejar la situacion:
@@ -298,34 +272,11 @@ def interpretar_prediccion(probs, clases, umbral):
 
 
 def limpiar_respuesta_groq(texto):
-    """
-    Limpia la respuesta cruda de Groq para dejar unicamente el array JSON:
-      1. Quita bloques de codigo markdown (```json ... ``` o ``` ... ```).
-      2. Recorta cualquier texto suelto antes/despues del array (Groq a veces
-         agrega frases tipo "Aqui esta el JSON solicitado:").
-      3. Normaliza comillas tipograficas ("smart quotes") a comillas rectas.
-      4. Elimina comas colgantes antes de ] o } que rompen el parseo JSON.
-    """
-    # 1. Quitar fences de markdown
+    """Limpia bloques de codigo markdown y extrae JSON o texto plano."""
+    # Quitar bloques ```json ... ``` o ```html ... ``` o ``` ... ```
     texto = re.sub(r'```(?:json|html)?\s*', '', texto, flags=re.IGNORECASE)
     texto = re.sub(r'\s*```', '', texto)
     texto = texto.strip()
-
-    # 2. Quedarse solo con lo que hay entre el primer '[' y el ultimo ']'
-    inicio = texto.find('[')
-    fin = texto.rfind(']')
-    if inicio != -1 and fin != -1 and fin > inicio:
-        texto = texto[inicio:fin + 1]
-
-    # 3. Normalizar comillas tipograficas que el modelo a veces usa
-    texto = (
-        texto.replace('\u201c', '"').replace('\u201d', '"')
-             .replace('\u2018', "'").replace('\u2019', "'")
-    )
-
-    # 4. Quitar comas colgantes antes de un cierre de array/objeto
-    texto = re.sub(r',\s*([}\]])', r'\1', texto)
-
     return texto
 
 
@@ -387,17 +338,12 @@ def parsear_recomendacion(texto):
 
 
 def obtener_recomendacion(clase, clase_secundaria=None):
-    """
-    Genera recomendacion estructurada con Groq (JSON); si falla, usa respaldo.
-    Devuelve una tupla (recomendacion, fuente) donde fuente es "ia" o "respaldo",
-    para que la interfaz pueda mostrar claramente de donde vino el contenido.
-    """
+    """Genera recomendacion estructurada con Groq (JSON); si falla, usa respaldo."""
     api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY"))
     respaldo = RECOMENDACIONES_ESTRUCTURADAS.get(clase, RECOMENDACIONES_ESTRUCTURADAS["sana"])
 
     if not api_key:
-        st.info("ℹ️ No hay GROQ_API_KEY configurada: se esta usando la guia tecnica predefinida.")
-        return respaldo, "respaldo"
+        return respaldo
 
     nombre = COFFEE_DISEASES[clase]["name"]
     categoria = COFFEE_DISEASES[clase]["category"]
@@ -409,9 +355,7 @@ def obtener_recomendacion(clase, clase_secundaria=None):
     prompt = (
         "Eres agronomo senior IHCAFE. Diagnostico: " + nombre + " (" + categoria + "). "
         "Responde UNICAMENTE con un array JSON valido de 5 objetos. "
-        "NO uses markdown, NO uses HTML, NO uses bloques de codigo, NO agregues texto "
-        "antes ni despues del array, NO agregues explicaciones. Tu respuesta debe "
-        "empezar directamente con '[' y terminar con ']'.\n\n"
+        "NO uses markdown, NO uses HTML, NO uses bloques de codigo. Solo JSON puro.\n\n"
         "Formato exacto:\n"
         '[{"num":"01","titulo":"Diferenciacion a simple vista","texto":"3-5 oraciones..."},'
         '{"num":"02","titulo":"Manejo agronomico preventivo y correctivo","texto":"..."},'
@@ -434,14 +378,11 @@ def obtener_recomendacion(clase, clase_secundaria=None):
         texto = resp.choices[0].message.content.strip()
         parsed = parsear_recomendacion(texto)
         if parsed and len(parsed) >= 3:
-            return parsed, "ia"
-        with st.expander("🔧 Debug: respuesta cruda de Groq (no se pudo interpretar)"):
-            st.code(texto)
-        st.warning("Groq respondio pero no se pudo interpretar el formato. Usando recomendacion curada.")
-        return respaldo, "respaldo"
+            return parsed
+        return respaldo
     except Exception as e:
         st.warning(f"Groq no disponible ({e}). Usando recomendacion curada.")
-        return respaldo, "respaldo"
+        return respaldo
 
 
 # ============================================================
@@ -456,15 +397,7 @@ def enviar_feedback_github(comentario, diagnostico_relacionado=None):
     body = f"**Comentario:** {comentario}\n\n**Diagnostico:** {diagnostico_relacionado or 'N/A'}\n\n**Fecha:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n_Enviado desde AgroDetect v2.0_"
     try:
         r = requests.post(url, headers=headers, json={"title": title, "body": body, "labels": ["feedback"]}, timeout=15)
-        if r.status_code == 201:
-            return True, "OK"
-        if r.status_code == 401:
-            return False, "Token invalido, vencido o revocado (401). Genera un token nuevo y actualiza GITHUB_TOKEN en Secrets."
-        if r.status_code == 403:
-            return False, "El token no tiene permiso de Issues sobre este repositorio (403)."
-        if r.status_code == 404:
-            return False, f"No se encontro el repositorio '{GITHUB_REPO}' o el token no tiene acceso a el (404)."
-        return False, f"Error {r.status_code}: {r.text[:200]}"
+        return r.status_code == 201, "OK" if r.status_code == 201 else f"Error {r.status_code}"
     except Exception as e:
         return False, str(e)
 
@@ -778,14 +711,14 @@ with col_nav3:
                 data=pdf_buffer,
                 file_name=f"diagnostico_{cd_export['id']}.pdf",
                 mime="application/pdf",
-                width='stretch',
+                use_container_width=True,
             )
         else:
-            if st.button("📄 EXPORTAR PDF", width='stretch'):
+            if st.button("📄 EXPORTAR PDF", use_container_width=True):
                 st.warning("Aun no hay ningun diagnostico para exportar.")
     with c2:
         lbl = "🌙" if is_dark else "☀️"
-        if st.button(lbl, width='stretch'):
+        if st.button(lbl, use_container_width=True):
             st.session_state.theme = "claro" if is_dark else "oscuro"
             st.rerun()
 render_html("<hr style='margin-top:0; margin-bottom:24px; border-color:" + border_color + ";'>")
@@ -820,8 +753,8 @@ if tab_choice == "DIAGNOSTICO":
             image = capturar_foto_camara()
 
         if image is not None:
-            st.image(image, width='stretch')
-            if st.button("🚀 DIAGNOSTICAR AHORA", type="primary", width='stretch'):
+            st.image(image, use_container_width=True)
+            if st.button("🚀 DIAGNOSTICAR AHORA", type="primary", use_container_width=True):
                 with st.spinner("Analizando pigmentacion necrotica foliar..."):
                     x = preprocesar_imagen(image, IMG_SIZE)
                     probs = modelo.predict(x, verbose=0)[0]
@@ -833,7 +766,7 @@ if tab_choice == "DIAGNOSTICO":
                             f"Toma otra foto con mejor enfoque/iluminacion o consulta a un tecnico IHCAFE."
                         )
                     else:
-                        rec, fuente_rec = obtener_recomendacion(resultado["clase"], resultado.get("clase_secundaria"))
+                        rec = obtener_recomendacion(resultado["clase"], resultado.get("clase_secundaria"))
                         coinf = None
                         if resultado["estado"] == "coinfeccion":
                             coinf = (
@@ -848,7 +781,6 @@ if tab_choice == "DIAGNOSTICO":
                             "primaryConfidence": resultado["confianza"],
                             "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
                             "recommendation": rec,
-                            "recommendation_source": fuente_rec,
                             "coinfeccion": coinf,
                             "image_path": image_path,
                         }
@@ -911,8 +843,7 @@ if tab_choice == "DIAGNOSTICO":
                 st.warning(cd["coinfeccion"])
 
             rec_data = cd.get("recommendation", [])
-            rec_fuente = cd.get("recommendation_source")
-            render_html(construir_recomendacion_html(rec_data, text_sub, rec_fuente))
+            render_html(construir_recomendacion_html(rec_data, text_sub))
 
             render_html("""
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:12px;">
