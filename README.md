@@ -269,7 +269,7 @@ Proyecto desarrollado para la asignatura de **Inteligencia Artificial**, UNAH �
 
 ## 📄 Licencia
 
-Este proyecto se distribuye bajo la licencia MIT. Ver [LICENSE](./LICENSE) para más detalles.
+Este proyecto se distribuye bajo la licencia MIT. Ver [LICENSE](./LICENSE.txt)) para más detalles.
 
 ## 📚 Referencias
 
