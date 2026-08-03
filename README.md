@@ -187,6 +187,8 @@ Crea el archivo `.streamlit/secrets.toml` (si no existe) con el siguiente conten
 ```toml
 # .streamlit/secrets.toml
 GROQ_API_KEY = "tu_api_key_aqui"
+GITHUB_TOKEN = "tu_token_aqui"
+GITHUB_REPO = "Izamar-0302/AgroDetect"
 ```
 
 > ⚠️ Nunca subas este archivo a GitHub. Ya está incluido en `.gitignore`. Si vas a desplegar en Streamlit Community Cloud, configura esta misma variable en **App settings → Secrets** dentro de la plataforma, en vez de usar el archivo local.
