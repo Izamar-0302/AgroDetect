@@ -4,7 +4,5 @@ numpy
 pillow
 groq
 reportlab
-agno
-openai
-streamlit
+requests
 python-dotenv
