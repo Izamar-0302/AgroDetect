@@ -390,13 +390,15 @@ def obtener_recomendacion(clase, clase_secundaria=None):
 # ALMACENAMIENTO DE COMENTARIOS (backend: GitHub Issues, uso interno)
 # ============================================================
 def enviar_feedback_github(comentario, diagnostico_relacionado=None):
-    # Lectura directa y segura de st.secrets o variables de entorno
+    import logging
     token = st.secrets["GITHUB_TOKEN"] if "GITHUB_TOKEN" in st.secrets else os.environ.get("GITHUB_TOKEN")
     repo = st.secrets["GITHUB_REPO"] if "GITHUB_REPO" in st.secrets else os.environ.get("GITHUB_REPO")
 
-    # Validación explícita
+    logging.warning(f"[FEEDBACK-DEBUG] token presente={bool(token)}, repo presente={bool(repo)}, keys_disponibles={list(st.secrets.keys()) if hasattr(st,'secrets') else 'N/A'}")
+
     if not token or not repo:
         return False, "El servicio de comentarios no esta configurado (Falta GITHUB_TOKEN o GITHUB_REPO en Secrets)."
+    
 
     url = f"https://api.github.com/repos/{repo}/issues"
 
