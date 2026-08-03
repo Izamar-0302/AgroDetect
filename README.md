@@ -10,7 +10,7 @@
 
 
 ---
-- **Url Streamlit ** —  ([Streamlit](https://agrodetect-grup4.streamlit.app/) 
+- **Url Streamlit ** —  ([Streamlit](https://agrodetect-grup4.streamlit.app/) )
 ## 📖 Índice
 
 - [Descripción del proyecto](#-descripción-del-proyecto)
