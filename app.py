@@ -298,11 +298,34 @@ def interpretar_prediccion(probs, clases, umbral):
 
 
 def limpiar_respuesta_groq(texto):
-    """Limpia bloques de codigo markdown y extrae JSON o texto plano."""
-    # Quitar bloques ```json ... ``` o ```html ... ``` o ``` ... ```
+    """
+    Limpia la respuesta cruda de Groq para dejar unicamente el array JSON:
+      1. Quita bloques de codigo markdown (```json ... ``` o ``` ... ```).
+      2. Recorta cualquier texto suelto antes/despues del array (Groq a veces
+         agrega frases tipo "Aqui esta el JSON solicitado:").
+      3. Normaliza comillas tipograficas ("smart quotes") a comillas rectas.
+      4. Elimina comas colgantes antes de ] o } que rompen el parseo JSON.
+    """
+    # 1. Quitar fences de markdown
     texto = re.sub(r'```(?:json|html)?\s*', '', texto, flags=re.IGNORECASE)
     texto = re.sub(r'\s*```', '', texto)
     texto = texto.strip()
+
+    # 2. Quedarse solo con lo que hay entre el primer '[' y el ultimo ']'
+    inicio = texto.find('[')
+    fin = texto.rfind(']')
+    if inicio != -1 and fin != -1 and fin > inicio:
+        texto = texto[inicio:fin + 1]
+
+    # 3. Normalizar comillas tipograficas que el modelo a veces usa
+    texto = (
+        texto.replace('\u201c', '"').replace('\u201d', '"')
+             .replace('\u2018', "'").replace('\u2019', "'")
+    )
+
+    # 4. Quitar comas colgantes antes de un cierre de array/objeto
+    texto = re.sub(r',\s*([}\]])', r'\1', texto)
+
     return texto
 
 
@@ -386,7 +409,9 @@ def obtener_recomendacion(clase, clase_secundaria=None):
     prompt = (
         "Eres agronomo senior IHCAFE. Diagnostico: " + nombre + " (" + categoria + "). "
         "Responde UNICAMENTE con un array JSON valido de 5 objetos. "
-        "NO uses markdown, NO uses HTML, NO uses bloques de codigo. Solo JSON puro.\n\n"
+        "NO uses markdown, NO uses HTML, NO uses bloques de codigo, NO agregues texto "
+        "antes ni despues del array, NO agregues explicaciones. Tu respuesta debe "
+        "empezar directamente con '[' y terminar con ']'.\n\n"
         "Formato exacto:\n"
         '[{"num":"01","titulo":"Diferenciacion a simple vista","texto":"3-5 oraciones..."},'
         '{"num":"02","titulo":"Manejo agronomico preventivo y correctivo","texto":"..."},'
@@ -410,6 +435,8 @@ def obtener_recomendacion(clase, clase_secundaria=None):
         parsed = parsear_recomendacion(texto)
         if parsed and len(parsed) >= 3:
             return parsed, "ia"
+        with st.expander("🔧 Debug: respuesta cruda de Groq (no se pudo interpretar)"):
+            st.code(texto)
         st.warning("Groq respondio pero no se pudo interpretar el formato. Usando recomendacion curada.")
         return respaldo, "respaldo"
     except Exception as e:
