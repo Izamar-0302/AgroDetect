@@ -7,6 +7,7 @@ import shutil
 import tempfile
 from datetime import datetime
 from io import BytesIO
+import requests
 
 import numpy as np
 import requests
@@ -389,16 +390,16 @@ def obtener_recomendacion(clase, clase_secundaria=None):
 # ALMACENAMIENTO DE COMENTARIOS (backend: GitHub Issues, uso interno)
 # ============================================================
 def enviar_feedback_github(comentario, diagnostico_relacionado=None):
-    # Obtener el token de forma dinámica para asegurar que lea los secretos actualizados
-    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN"))
-    repo = st.secrets.get("GITHUB_REPO", os.environ.get("GITHUB_REPO"))
+    # Lectura directa y segura de st.secrets o variables de entorno
+    token = st.secrets["GITHUB_TOKEN"] if "GITHUB_TOKEN" in st.secrets else os.environ.get("GITHUB_TOKEN")
+    repo = st.secrets["GITHUB_REPO"] if "GITHUB_REPO" in st.secrets else os.environ.get("GITHUB_REPO")
 
+    # Validación explícita
     if not token or not repo:
         return False, "El servicio de comentarios no esta configurado (Falta GITHUB_TOKEN o GITHUB_REPO en Secrets)."
 
     url = f"https://api.github.com/repos/{repo}/issues"
 
-    # Se usa 'Bearer' para compatibilidad completa con Fine-Grained Tokens
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
@@ -424,12 +425,10 @@ def enviar_feedback_github(comentario, diagnostico_relacionado=None):
         if r.status_code == 201:
             return True, "OK"
         else:
-            # Devuelve el texto detallado de error enviado por GitHub (ej. permisos insuficientes, etc.)
             return False, f"Error {r.status_code}: {r.text}"
 
     except Exception as e:
         return False, str(e)
-
 
 def obtener_feedback_github():
     if not GITHUB_TOKEN or not GITHUB_REPO:
