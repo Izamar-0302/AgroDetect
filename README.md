@@ -231,8 +231,8 @@ agrodetect/
 ├── notebooks/
 │   └── AgroDetect_Entrenamiento.ipynb   # Notebook de entrenamiento (Google Colab / Jupyter)
 ├── .gitattributes                       # Configuración de Git (LFS, finales de línea, etc.)
-├── app.py                               # Aplicación principal de Streamlit
 ├── README.md                            # Descripción y guía general del proyecto
+├── app.py                               # Aplicación principal de Streamlit
 └── requirements.txt                     # Dependencias del entorno de Python
 ```
 
