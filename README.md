@@ -220,14 +220,20 @@ No es necesario para usar la aplicación, pero si quieres reentrenar o experimen
 
 ```
 agrodetect/
-├── app.py                  # Aplicación principal de Streamlit
-├── model/                  # Modelo entrenado (.keras / .h5) y config_app.json
-├── notebooks/               # Notebook completo de entrenamiento (Colab/Jupyter)
-├── Dataset/                   # Organización de datasets
-├── docs/                   # Informe final y documentación del proyecto
-├── requirements.txt        
-├── .gitattributes
-└── README.md
+├── .streamlit/
+│   └── secrets.toml                     # Configuración de secretos / credenciales locales
+├── Dataset/                             # Organización de datasets
+├── docs/
+│   └── anteproyecto_AgroDetect_overl... # Documentación y borrador del anteproyecto
+├── model/
+│   ├── agrodetect_mobilenetv2.keras    # Modelo entrenado (MobileNetV2)
+│   └── config_app.json                 # Configuración de clases / parámetros de la app
+├── notebooks/
+│   └── AgroDetect_Entrenamiento.ipynb   # Notebook de entrenamiento (Google Colab / Jupyter)
+├── .gitattributes                       # Configuración de Git (LFS, finales de línea, etc.)
+├── app.py                               # Aplicación principal de Streamlit
+├── README.md                            # Descripción y guía general del proyecto
+└── requirements.txt                     # Dependencias del entorno de Python
 ```
 
 ## 👥 Beneficiarios
