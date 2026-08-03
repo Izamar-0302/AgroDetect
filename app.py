@@ -389,15 +389,44 @@ def obtener_recomendacion(clase, clase_secundaria=None):
 # ALMACENAMIENTO DE COMENTARIOS (backend: GitHub Issues, uso interno)
 # ============================================================
 def enviar_feedback_github(comentario, diagnostico_relacionado=None):
-    if not GITHUB_TOKEN or not GITHUB_REPO:
-        return False, "El servicio de comentarios no esta configurado."
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/issues"
-    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    # Obtener el token de forma dinámica para asegurar que lea los secretos actualizados
+    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN"))
+    repo = st.secrets.get("GITHUB_REPO", os.environ.get("GITHUB_REPO"))
+
+    if not token or not repo:
+        return False, "El servicio de comentarios no esta configurado (Falta GITHUB_TOKEN o GITHUB_REPO en Secrets)."
+
+    url = f"https://api.github.com/repos/{repo}/issues"
+
+    # Se usa 'Bearer' para compatibilidad completa con Fine-Grained Tokens
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "AgroDetect-App"
+    }
+
     title = f"[Feedback] {comentario[:50]}{'...' if len(comentario) > 50 else ''}"
-    body = f"**Comentario:** {comentario}\n\n**Diagnostico:** {diagnostico_relacionado or 'N/A'}\n\n**Fecha:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n_Enviado desde AgroDetect v2.0_"
+    body = (
+        f"**Comentario:** {comentario}\n\n"
+        f"**Diagnostico:** {diagnostico_relacionado or 'N/A'}\n\n"
+        f"**Fecha:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n"
+        f"_Enviado desde AgroDetect v2.0_"
+    )
+
     try:
-        r = requests.post(url, headers=headers, json={"title": title, "body": body, "labels": ["feedback"]}, timeout=15)
-        return r.status_code == 201, "OK" if r.status_code == 201 else f"Error {r.status_code}"
+        r = requests.post(
+            url, 
+            headers=headers, 
+            json={"title": title, "body": body, "labels": ["feedback"]}, 
+            timeout=15
+        )
+
+        if r.status_code == 201:
+            return True, "OK"
+        else:
+            # Devuelve el texto detallado de error enviado por GitHub (ej. permisos insuficientes, etc.)
+            return False, f"Error {r.status_code}: {r.text}"
+
     except Exception as e:
         return False, str(e)
 
