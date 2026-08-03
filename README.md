@@ -111,7 +111,7 @@ Tras ampliar el dataset (nuevas fuentes de roya combinadas + imágenes en primer
 | Exactitud (test) | 0.896 |
 | F1-score macro (test) | 0.888 |
 
-Se utilizó **Grad-CAM** para verificar que el modelo aprende patrones visuales relevantes (la hoja y sus lesiones) y no artefactos del fondo, y para diagnosticar las causas de confusión entre clases visualmente similares. Los detalles completos (matriz de confusión, reporte por clase, mapas de calor) están documentados en [`docs/informe_final.pdf`](./docs/informe_final.pdf).
+Se utilizó **Grad-CAM** para verificar que el modelo aprende patrones visuales relevantes (la hoja y sus lesiones) y no artefactos del fondo, y para diagnosticar las causas de confusión entre clases visualmente similares. Los detalles completos (matriz de confusión, reporte por clase, mapas de calor) están documentados en [`docs/AgroDetect_Informe_final_Grupo4.pdf`](.docs/AgroDetect_Informe_final_Grupo4.pdf).
 
 ## 🛠️ Tecnologías utilizadas
 
@@ -142,7 +142,7 @@ El proyecto trabaja con imágenes de repositorios públicos ya etiquetados:
 - **Red Spider Mite** y **ROCC** ([Roboflow Universe](https://universe.roboflow.com/lance-eugene/red-spider-mite))
 - Conjunto adicional de imágenes en primer plano de la lesión, incorporado para mejorar el reconocimiento de cercospora y araña roja
 
-> La lista completa de repositorios y referencias bibliográficas está disponible en [`docs/informe_final.pdf`](./docs/informe_final.pdf).
+> La lista completa de repositorios y referencias bibliográficas está disponible en [`docs/AgroDetect_Informe_final_Grupo4.pdf`](./docs/AgroDetect_Informe_final_Grupo4.pdf).
 
 ## ✅ Requisitos previos
 
@@ -226,7 +226,8 @@ agrodetect/
 │   └── secrets.toml                     # Configuración de secretos / credenciales locales
 ├── Dataset/                             # Organización de datasets
 ├── docs/
-│   └── anteproyecto_AgroDetect_overl... # Documentación y borrador del anteproyecto
+│   └── anteproyecto_AgroDetect_overl... # Documentación y borrador del anteproyecto     
+│   └── AgroDetect_Informe_final_Grupo4.pdf
 ├── model/
 │   ├── agrodetect_mobilenetv2.keras    # Modelo entrenado (MobileNetV2)
 │   └── config_app.json                 # Configuración de clases / parámetros de la app
@@ -272,7 +273,7 @@ Este proyecto se distribuye bajo la licencia MIT. Ver [LICENSE](./LICENSE) para 
 
 ## 📚 Referencias
 
-Las referencias completas de los datasets y la bibliografía utilizada están disponibles en la sección de **Referencias bibliográficas** del [informe final](./docs/informe_final.pdf).
+Las referencias completas de los datasets y la bibliografía utilizada están disponibles en la sección de **Referencias bibliográficas** del [informe final](./docs/AgroDetect_Informe_final_Grupo4.pdf).
 
 ---
 
